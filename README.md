@@ -1,15 +1,21 @@
-# URL Monitoring Dashboard
+# GuardianEye - Professional Monitoring Service
 
-A modern web application for monitoring website availability using Prometheus and Blackbox Exporter.
+A modern web application for monitoring website and service availability with real-time alerts and comprehensive metrics.
 
 ## Features
 
-- 🌐 Add and manage URLs to monitor
-- ⚙️ Automatic Prometheus and Blackbox Exporter configuration generation
+- 🌐 Monitor websites, APIs, and servers
 - 📊 Beautiful, modern UI with real-time updates
+- ⚡ Multiple monitoring types (HTTP, HTTPS, Ping, Port, Keyword)
+- 🔐 SSL certificate monitoring and expiration alerts
+- 📈 Response time tracking and performance metrics
+- ⏱️ Customizable check intervals
+- 🚨 Incident management and tracking
+- 📱 Telegram notifications
+- ⏰ Cron job monitoring with ping URLs
+- 📤 Metrics gateway for custom metrics
+- 🌍 Public status pages
 - 🐳 Docker Compose setup for easy deployment
-- 📈 Integration with Grafana for advanced visualization
-- ⏱️ Customizable check intervals per URL
 
 ## Quick Start
 
@@ -23,9 +29,7 @@ docker-compose up -d
 
 This will start all services:
 - **Web Dashboard** on http://localhost:3000
-- **Prometheus** on http://localhost:9090
-- **Blackbox Exporter** on http://localhost:9115
-- **Grafana** on http://localhost:3001 (default credentials: admin/admin)
+- **Backend Services** (automatic configuration)
 
 **That's it!** Open http://localhost:3000 and start adding URLs to monitor.
 
@@ -40,61 +44,33 @@ npm install
 # Start the web application
 npm run dev
 
-# In another terminal, start monitoring services
-docker-compose up -d prometheus blackbox grafana
+# In another terminal, start backend services
+docker-compose up -d
 ```
 
 ### Usage
 
 1. Open [http://localhost:3000](http://localhost:3000) in your browser
-2. Click "Add New URL" button
-3. Enter the website URL (e.g., https://example.com)
-4. Give it a display name and choose a check interval
-5. Click "Add URL"
-6. Download the updated configuration files (automatic in Docker setup)
-7. Restart Prometheus to pick up changes: `docker-compose restart prometheus`
+2. Login with your credentials (default: admin/admin123)
+3. Navigate to the **Monitors** tab
+4. Click "Add New Monitor" button
+5. Enter the website/service details:
+   - URL or hostname
+   - Display name
+   - Monitor type (HTTP, HTTPS, Ping, Port, Keyword)
+   - Check interval
+   - Optional: Keyword to check for
+   - Optional: SSL monitoring
+6. Click "Add Monitor"
+7. View real-time status updates in the dashboard
 
-### 6. View Metrics
+### Additional Features
 
-Access Prometheus at http://localhost:9090 and run queries like:
-
-```promql
-# Check if websites are up (1 = up, 0 = down)
-probe_success
-
-# Response time in seconds
-probe_duration_seconds
-
-# HTTP status code
-probe_http_status_code
-```
-
-## Prometheus Queries Examples
-
-Here are some useful queries you can run in Prometheus:
-
-```promql
-# Website uptime percentage (last hour)
-avg_over_time(probe_success[1h]) * 100
-
-# Average response time
-avg(probe_duration_seconds)
-
-# List of down websites
-probe_success == 0
-
-# SSL certificate expiry (in days)
-(probe_ssl_earliest_cert_expiry - time()) / 86400
-```
-
-## Grafana Dashboard
-
-1. Access Grafana at http://localhost:3001
-2. Login with admin/admin
-3. Add Prometheus as a data source:
-   - URL: http://prometheus:9090
-   - Access: Server (default)
-4. Create a new dashboard or import a Blackbox Exporter dashboard (ID: 7587)
+- **Cron Job Monitoring**: Get unique ping URLs to monitor scheduled tasks
+- **Metrics Gateway**: Push custom metrics from batch jobs
+- **Incidents**: Automatically track downtime events
+- **Status Pages**: Create public status pages for your services
+- **Telegram Notifications**: Configure alerts via Telegram
 
 ## Project Structure
 
@@ -120,29 +96,60 @@ probe_success == 0
 
 ## API Endpoints
 
+### URL Management
 - `GET /api/urls` - Get all monitored URLs
 - `POST /api/urls` - Add a new URL
 - `DELETE /api/urls/[id]` - Delete a URL
 - `PATCH /api/urls/[id]` - Update a URL
-- `GET /api/config/prometheus` - Download Prometheus config
-- `GET /api/config/blackbox` - Download Blackbox config
+
+### Monitoring
+- `GET /api/metrics` - Get current metrics for all monitors
+- `GET /api/history/[url]` - Get historical data for a specific URL
+
+### Cron Jobs
+- `POST /api/ping/[checkId]` - Ping endpoint for cron job checks
+
+### Metrics Gateway
+- `POST /api/pushgateway/metrics/job/[job]` - Push custom metrics
+
+### Configuration
+- `GET /api/telegram/config` - Get Telegram configuration
+- `POST /api/telegram/config` - Update Telegram configuration
+- `POST /api/telegram/test` - Test Telegram notifications
 
 ## Configuration
 
-### Prometheus
+### Environment Variables
 
-The application automatically generates a Prometheus configuration file that includes:
-- Self-scraping for Prometheus metrics
-- Blackbox Exporter integration
-- Individual jobs for each monitored URL with custom intervals
+Create a `.env` file in the root directory to configure the application:
 
-### Blackbox Exporter
+```bash
+# Application
+NODE_ENV=production
+APP_PORT=3000
 
-The Blackbox configuration includes multiple modules:
-- `http_2xx` - HTTP probe accepting 2xx status codes
-- `http_post_2xx` - POST request probe
-- `tcp_connect` - TCP connection probe
-- `icmp` - ICMP (ping) probe
+# Database
+DB_HOST=mysql
+DB_PORT=3306
+DB_NAME=monitoring
+DB_USER=monitoring
+DB_PASSWORD=your_secure_password
+
+# Authentication
+SESSION_SECRET=your_secret_key
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_PASSWORD=your_admin_password
+
+# Telegram (Optional)
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+
+# Monitoring Settings
+DEFAULT_CHECK_INTERVAL=30
+DEFAULT_HTTP_TIMEOUT=10
+```
+
+See `env.template` for a complete list of available options.
 
 ## Customization
 
@@ -155,17 +162,21 @@ Edit the URL in the web interface or modify the `interval` field when adding URL
 - `5m` - Every 5 minutes
 - `15m` - Every 15 minutes
 
-### Modify Blackbox Modules
+### Monitor Types
 
-Edit `lib/prometheus.ts` to customize the Blackbox Exporter modules with different probing options.
+Choose from different monitor types based on your needs:
+- **HTTP/HTTPS** - Monitor web services and APIs
+- **Ping** - Check if servers are reachable
+- **Port** - Monitor specific TCP ports
+- **Keyword** - Check if specific content exists on a page
 
 ## Troubleshooting
 
-### URLs not being probed
+### Monitors not updating
 
-1. Make sure you've added URLs in the web interface (http://localhost:3000)
-2. The configuration is automatically updated
-3. Restart Prometheus: `docker-compose restart prometheus`
+1. Make sure you've added monitors in the web interface (http://localhost:3000)
+2. Check if backend services are running: `docker-compose ps`
+3. Restart services if needed: `docker-compose restart`
 
 ### Can't connect to the Web Dashboard
 
@@ -173,17 +184,11 @@ Edit `lib/prometheus.ts` to customize the Blackbox Exporter modules with differe
 2. View logs: `docker-compose logs web`
 3. Ensure port 3000 is not in use: `lsof -i :3000`
 
-### Can't connect to Prometheus
+### Backend service issues
 
 1. Check if containers are running: `docker-compose ps`
-2. View logs: `docker-compose logs prometheus`
-3. Ensure port 9090 is not in use by another service
-
-### Configuration not updating in Prometheus
-
-1. Configurations are automatically generated when you add/remove URLs
-2. Restart Prometheus to reload config: `docker-compose restart prometheus`
-3. Check config files: `cat prometheus-config/prometheus.yml`
+2. View logs: `docker-compose logs`
+3. Ensure required ports are not in use by another service
 
 ### Build errors
 
@@ -199,20 +204,23 @@ docker-compose up -d
 
 For production use:
 
-1. **Secure Grafana**: Change the default admin password
-2. **Persistent Storage**: The docker-compose file already includes volumes for data persistence
-3. **Reverse Proxy**: Consider using Nginx or Traefik in front of the services
-4. **SSL/TLS**: Enable HTTPS for the web interface
-5. **Authentication**: Add authentication middleware to the Next.js app
+1. **Change Default Credentials**: Update admin password in `.env` file
+2. **Set Strong Session Secret**: Generate a secure random string for `SESSION_SECRET`
+3. **Configure Database**: Use a secure password for database access
+4. **Persistent Storage**: The docker-compose file already includes volumes for data persistence
+5. **Reverse Proxy**: Consider using Nginx or Traefik in front of the services
+6. **SSL/TLS**: Enable HTTPS for the web interface
+7. **Telegram Alerts**: Configure Telegram bot for notifications
+8. **Backup**: Regularly backup the database and configuration files
 
-## Technologies Used
+See `DEPLOYMENT_GUIDE.md` for detailed deployment instructions.
+
+## Tech Stack
 
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **Prometheus** - Metrics collection and alerting
-- **Blackbox Exporter** - HTTP/HTTPS/TCP/ICMP probing
-- **Grafana** - Visualization and dashboards
+- **Tailwind CSS** - Modern styling
+- **MySQL** - Database
 - **Docker & Docker Compose** - Containerization
 
 ## License

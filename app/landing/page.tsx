@@ -31,8 +31,8 @@ export default function LandingPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
       ),
-      title: 'Pushgateway',
-      description: 'Push custom metrics from batch jobs and ephemeral services. Compatible with Prometheus metric format.',
+      title: 'Metrics Gateway',
+      description: 'Push custom metrics from batch jobs and scheduled tasks. Track your custom performance data.',
     },
     {
       icon: (
@@ -281,7 +281,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
-            {['Telegram', 'Slack', 'Discord', 'Prometheus', 'Grafana', 'PagerDuty', 'Webhooks', 'Email', 'SMS', 'Microsoft Teams', 'Opsgenie', 'REST API'].map((integration, idx) => (
+            {['Telegram', 'Slack', 'Discord', 'Webhooks', 'Email', 'SMS', 'Microsoft Teams', 'PagerDuty', 'Opsgenie', 'REST API', 'Mobile Apps', 'Custom API'].map((integration, idx) => (
               <div
                 key={idx}
                 className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 flex items-center justify-center text-gray-700 font-semibold hover:shadow-md transition-all"

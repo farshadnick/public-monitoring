@@ -31,8 +31,8 @@ export default function LandingPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
       ),
-      title: 'Pushgateway',
-      description: 'Push custom metrics from batch jobs and ephemeral services. Compatible with Prometheus metric format.',
+      title: 'Metrics Gateway',
+      description: 'Push custom metrics from batch jobs and scheduled tasks. Track your custom performance data.',
     },
     {
       icon: (
@@ -93,7 +93,7 @@ export default function LandingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <span className="text-2xl font-bold text-gray-900">UptimeMonitor</span>
+              <span className="text-2xl font-bold text-gray-900">GuardianEye</span>
             </div>
             <div className="flex items-center gap-4">
               <Link
@@ -246,7 +246,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl lg:text-5xl font-bold mb-4">
-              Built for Everyone
+              Trusted by Professionals
             </h2>
             <p className="text-xl text-blue-100">
               From startups to enterprises
@@ -281,7 +281,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
-            {['Telegram', 'Slack', 'Discord', 'Prometheus', 'Grafana', 'PagerDuty', 'Webhooks', 'Email', 'SMS', 'Microsoft Teams', 'Opsgenie', 'REST API'].map((integration, idx) => (
+            {['Telegram', 'Slack', 'Discord', 'Webhooks', 'Email', 'SMS', 'Microsoft Teams', 'PagerDuty', 'Opsgenie', 'REST API', 'Mobile Apps', 'Custom API'].map((integration, idx) => (
               <div
                 key={idx}
                 className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 flex items-center justify-center text-gray-700 font-semibold hover:shadow-md transition-all"
@@ -300,7 +300,7 @@ export default function LandingPage() {
             Start Monitoring Today
           </h2>
           <p className="text-xl text-gray-600 mb-12">
-            Join thousands of developers and teams who trust UptimeMonitor to keep their services online.
+            Join thousands of professionals who trust GuardianEye to keep their services online.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -330,7 +330,7 @@ export default function LandingPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="text-xl font-bold">UptimeMonitor</span>
+                <span className="text-xl font-bold">GuardianEye</span>
               </div>
               <p className="text-gray-400">
                 Professional monitoring for modern infrastructure.
@@ -369,7 +369,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 UptimeMonitor. All rights reserved.</p>
+            <p>&copy; 2025 GuardianEye. All rights reserved.</p>
           </div>
         </div>
       </footer>

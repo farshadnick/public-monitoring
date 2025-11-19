@@ -46,8 +46,8 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">URL Monitoring</h1>
-          <p className="text-gray-400">Sign in to access your dashboard</p>
+          <h1 className="text-3xl font-bold text-white mb-2">GuardianEye</h1>
+          <p className="text-gray-400">Sign in to access your monitoring dashboard</p>
         </div>
 
         {/* Login Form */}
@@ -101,14 +101,14 @@ export default function LoginPage() {
 
           <div className="mt-6 pt-6 border-t border-white/20">
             <p className="text-gray-400 text-sm text-center">
-              Default credentials: <span className="text-white font-mono">admin / admin123</span>
+              Contact your administrator for credentials
             </p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="mt-6 text-center text-gray-400 text-sm">
-          <p>Prometheus URL Monitoring Platform</p>
+          <p>Professional Monitoring Platform</p>
         </div>
       </div>
     </div>

@@ -1,134 +1,156 @@
-# Quick Start Guide
+# GuardianEye - Quick Start Guide
 
-Get your URL monitoring system up and running in 5 minutes!
+Get your monitoring system up and running in 5 minutes!
 
-## Step 1: Install Dependencies
+## Step 1: Start with Docker (Recommended)
+
+```bash
+# Clone and start all services
+docker-compose up -d
+```
+
+This will start:
+- Web Dashboard on http://localhost:3000
+- All backend services (automatic configuration)
+
+**OR** for development:
 
 ```bash
 npm install
-# or use the setup script
-chmod +x scripts/setup.sh
-./scripts/setup.sh
-```
-
-## Step 2: Start the Web Application
-
-```bash
 npm run dev
+# In another terminal: docker-compose up -d
 ```
 
-Open your browser to [http://localhost:3000](http://localhost:3000)
+## Step 2: Login
 
-## Step 3: Add Your First URL
+1. Open [http://localhost:3000](http://localhost:3000)
+2. Login with default credentials:
+   - **Username**: `admin`
+   - **Password**: `admin123`
 
-1. Click the **"+ Add New URL"** button
-2. Fill in the form:
+> **Important**: Change these credentials in production!
+
+## Step 3: Add Your First Monitor
+
+1. Navigate to the **Monitors** tab
+2. Click **"+ Add New Monitor"** button
+3. Fill in the form:
    - **Website URL**: `https://google.com`
-   - **Display Name**: `Google`
+   - **Display Name**: `Google Homepage`
+   - **Monitor Type**: `HTTPS`
    - **Check Interval**: `30s`
-3. Click **"Add URL"**
+   - **SSL Monitoring**: ✓ Enabled
+4. Click **"Add Monitor"**
 
-## Step 4: Restart Prometheus (Important!)
+## Step 4: View Live Status
 
-After adding URLs, restart Prometheus to load the new configuration:
+Your monitor will start checking immediately! You'll see:
+- ✅ **Up** - Service is responding
+- ❌ **Down** - Service is not responding
+- ⏱️ **Response Time** - How fast it responds
+- 🔒 **SSL Days** - Certificate expiration countdown
 
-```bash
-docker-compose restart prometheus
-```
+## Step 5: Set Up Alerts (Optional)
 
-The web app automatically updates the config files when you add/remove URLs.
+### Telegram Notifications
 
-## Step 5: View Your Metrics
+1. Go to the **Settings** tab
+2. Enter your Telegram Bot Token
+3. Enter your Chat ID
+4. Click **"Test Connection"**
+5. Save configuration
 
-### Prometheus
-Visit [http://localhost:9090](http://localhost:9090)
+Now you'll get instant alerts when services go down!
 
-Try these queries:
-```promql
-# Check if website is up (1 = up, 0 = down)
-probe_success
+## Additional Features
 
-# Response time
-probe_duration_seconds
+### Cron Job Monitoring
 
-# HTTP status code
-probe_http_status_code
-```
+1. Navigate to the **Cron Jobs** tab
+2. Click **"Add New Check"**
+3. Configure your schedule or grace period
+4. Copy the ping URL
+5. Add to your cron job: `curl -X POST [ping-url]`
 
-### Grafana (Optional)
-Visit [http://localhost:3001](http://localhost:3001)
-- Username: `admin`
-- Password: `admin`
+### Metrics Gateway
+
+1. Navigate to the **Metrics Gateway** tab
+2. Click **"Show Usage Guide"**
+3. Follow examples to push custom metrics from your scripts
+
+### Status Pages
+
+1. Navigate to the **Status Page** tab
+2. Create a public status page
+3. Select monitors to display
+4. Share the public URL with your team/customers
 
 ## Troubleshooting
 
-**Problem: "No targets" in Prometheus**
-- Make sure you've added URLs in the web interface
-- Download the configuration files again
-- Restart Prometheus: `docker-compose restart prometheus`
+**Problem: Can't login**
+- Check default credentials: admin/admin123
+- View logs: `docker-compose logs web`
 
-**Problem: Can't access Prometheus**
-- Check if containers are running: `docker-compose ps`
-- View logs: `docker-compose logs prometheus`
+**Problem: Monitors showing as "Unknown"**
+- Wait 30-60 seconds for first check
+- Refresh the page
+- Check if backend services are running: `docker-compose ps`
 
-**Problem: URLs showing as down**
-- Check if the URLs are accessible from your machine
-- Try pinging them manually
-- Check Blackbox Exporter logs: `docker-compose logs blackbox`
+**Problem: No alerts received**
+- Verify Telegram bot token and chat ID
+- Use "Test Connection" button in Settings
+- Check Telegram bot permissions
+
+**Problem: Services not starting**
+- Check if ports are available: `lsof -i :3000`
+- View all logs: `docker-compose logs`
+- Rebuild containers: `docker-compose build --no-cache`
 
 ## Next Steps
 
-- Add more URLs to monitor
-- Set up custom check intervals for different URLs
-- Create Grafana dashboards for visualization
-- Set up alerting rules in Prometheus
+- ✅ Add more monitors for your services
+- 📊 Create incident response procedures
+- 🌍 Set up public status pages
+- ⏰ Monitor your cron jobs and batch processes
+- 📤 Push custom metrics from your applications
+- 🔔 Configure Telegram alerts for your team
 
-## Common Prometheus Queries
+## Monitor Types
 
-```promql
-# Websites that are down
-probe_success == 0
+Choose the right monitor type for your use case:
 
-# Average response time
-avg(probe_duration_seconds)
-
-# 95th percentile response time
-histogram_quantile(0.95, probe_duration_seconds)
-
-# SSL certificate expiry (days remaining)
-(probe_ssl_earliest_cert_expiry - time()) / 86400
-
-# Uptime percentage (last 24 hours)
-avg_over_time(probe_success[24h]) * 100
-```
+- **HTTP/HTTPS** - Web services, APIs, websites
+- **Ping** - Basic connectivity check for servers
+- **Port** - Specific TCP port monitoring (databases, services)
+- **Keyword** - Check if specific text appears on a page
 
 ## Architecture
 
 ```
-┌─────────────┐
-│   Web App   │ ← You add URLs here
-│ (Next.js)   │
-└──────┬──────┘
-       │ generates
-       ↓
-┌─────────────────┐
-│ Config Files    │
-│ - prometheus.yml│
-│ - blackbox.yml  │
-└──────┬──────────┘
-       │ used by
-       ↓
-┌─────────────┐      ┌──────────────┐
-│ Prometheus  │─────→│   Blackbox   │
-│             │      │   Exporter   │
-└──────┬──────┘      └──────┬───────┘
-       │                    │
-       │                    │ probes
-       ↓                    ↓
-   ┌───────┐         ┌──────────────┐
-   │Grafana│         │Your Websites │
-   └───────┘         └──────────────┘
+┌─────────────────────┐
+│   Web Dashboard     │ ← You manage everything here
+│   (GuardianEye UI)  │
+└──────────┬──────────┘
+           │
+           ↓
+┌─────────────────────┐
+│   Backend Services  │ ← Automatic monitoring
+│   (Containerized)   │
+└──────────┬──────────┘
+           │ monitors
+           ↓
+     ┌────────────┐
+     │  Your      │
+     │  Services  │
+     └────────────┘
 ```
 
-Enjoy monitoring! 🚀
+## Pro Tips
 
+💡 **Use different check intervals**: Critical services every 30s, less critical every 5m
+💡 **Enable SSL monitoring**: Get alerts before certificates expire
+💡 **Keyword monitoring**: Ensure specific content is loading correctly
+💡 **Public status pages**: Keep customers informed proactively
+💡 **Cron monitoring**: Catch silent failures in scheduled tasks
+
+Enjoy monitoring! 🚀

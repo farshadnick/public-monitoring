@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // This endpoint receives metrics push from batch jobs
-// Compatible with Prometheus Pushgateway format
+// Compatible with standard metrics format
 export async function POST(
   request: NextRequest,
   { params }: { params: { job: string } }
@@ -24,7 +24,7 @@ async function handleMetricsPush(request: NextRequest, job: string) {
     // Get metrics data from request body
     const metricsText = await request.text();
     
-    // Parse Prometheus text format (simplified parser)
+    // Parse standard metrics text format (simplified parser)
     const metrics: any[] = [];
     const lines = metricsText.split('\n');
     

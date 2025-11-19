@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'UptimeMonitor - Website Uptime Monitoring Service',
-  description: 'Professional website monitoring service. Monitor your websites, APIs, and servers. Get instant alerts when your sites go down. SSL monitoring, response time tracking, and more.',
+  title: 'GuardianEye - Professional Monitoring Service',
+  description: 'Professional monitoring service for your websites, APIs, and servers. Get instant alerts when your services go down. Real-time monitoring, performance tracking, and more.',
 }
 
 export default function RootLayout({

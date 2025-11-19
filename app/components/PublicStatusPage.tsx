@@ -198,7 +198,7 @@ export default function PublicStatusPage() {
 
           {/* Preview Footer */}
           <div className="border-t border-gray-200 p-6 text-center text-sm text-gray-600">
-            <p>Powered by UptimeMonitor • Last updated: {new Date().toLocaleString()}</p>
+            <p>Powered by GuardianEye • Last updated: {new Date().toLocaleString()}</p>
           </div>
         </div>
       </div>

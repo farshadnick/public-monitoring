@@ -120,8 +120,8 @@ export default function PushGateway() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Pushgateway</h2>
-          <p className="text-gray-600 mt-1">Push custom metrics from batch jobs and ephemeral services</p>
+          <h2 className="text-2xl font-bold text-gray-900">Metrics Gateway</h2>
+          <p className="text-gray-600 mt-1">Push custom metrics from batch jobs and scheduled tasks</p>
         </div>
         <button
           onClick={() => setShowHelp(true)}
@@ -362,7 +362,7 @@ export default function PushGateway() {
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold text-gray-900">Pushgateway Usage Guide</h3>
+                <h3 className="text-2xl font-bold text-gray-900">Metrics Gateway Usage Guide</h3>
                 <button
                   onClick={() => setShowHelp(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -376,11 +376,10 @@ export default function PushGateway() {
 
             <div className="p-6 space-y-6">
               <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-3">What is Pushgateway?</h4>
+                <h4 className="text-lg font-semibold text-gray-900 mb-3">What is Metrics Gateway?</h4>
                 <p className="text-gray-700">
-                  Similar to <a href="https://healthchecks.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 underline">Healthchecks.io</a>, 
-                  Pushgateway allows ephemeral and batch jobs to push their metrics to an intermediary service. 
-                  Unlike long-running services that Prometheus can scrape, short-lived jobs may finish before Prometheus scrapes them.
+                  Metrics Gateway allows ephemeral and batch jobs to push their metrics to an intermediary service. 
+                  Perfect for short-lived jobs, scheduled tasks, and batch processes that need to report performance data.
                 </p>
               </div>
 
@@ -400,7 +399,7 @@ export default function PushGateway() {
                     <h5 className="font-semibold text-gray-900 mb-2">Using Python:</h5>
                     <div className="bg-gray-900 rounded-lg p-4 text-sm">
                       <code className="text-green-400">
-                        {`from prometheus_client import CollectorRegistry, Gauge, push_to_gateway\n\nregistry = CollectorRegistry()\ng = Gauge('backup_duration_seconds', 'Backup duration', registry=registry)\ng.set(145.23)\npush_to_gateway('${window.location.origin}/api/pushgateway', job='backup_job', registry=registry)`}
+                        {`import requests\n\nmetrics = 'backup_duration_seconds 145.23\\nbackup_size_bytes 5368709120'\nurl = '${window.location.origin}/api/pushgateway/metrics/job/backup_job'\nrequests.post(url, data=metrics)`}
                       </code>
                     </div>
                   </div>
@@ -408,7 +407,7 @@ export default function PushGateway() {
                   <div>
                     <h5 className="font-semibold text-gray-900 mb-2">Metric Format:</h5>
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-sm text-gray-700 mb-2">Metrics should follow Prometheus text format:</p>
+                      <p className="text-sm text-gray-700 mb-2">Metrics should follow the standard text format:</p>
                       <code className="text-sm text-gray-800">
                         # HELP metric_name Description of metric<br/>
                         # TYPE metric_name gauge<br/>
@@ -452,8 +451,8 @@ export default function PushGateway() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-semibold text-blue-900 mb-2">💡 Pro Tip</h4>
                 <p className="text-sm text-blue-800">
-                  Combine Pushgateway with Cron Job Monitoring for comprehensive observability. 
-                  Use Cron Jobs to ensure your tasks run on schedule, and Pushgateway to collect detailed metrics about their execution.
+                  Combine Metrics Gateway with Cron Job Monitoring for comprehensive observability. 
+                  Use Cron Jobs to ensure your tasks run on schedule, and Metrics Gateway to collect detailed performance data.
                 </p>
               </div>
             </div>

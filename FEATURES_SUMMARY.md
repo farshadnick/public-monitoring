@@ -1,7 +1,7 @@
-# UptimeMonitor - Complete Feature Summary
+# GuardianEye - Complete Feature Summary
 
 ## 🎉 Overview
-Your monitoring platform now includes comprehensive features inspired by [UptimeRobot](https://uptimerobot.com/) and [Healthchecks.io](https://healthchecks.io/), with a professional landing page and full-featured dashboard.
+Your professional monitoring platform with comprehensive features including real-time monitoring, incident tracking, cron job monitoring, custom metrics, and public status pages.
 
 ---
 
@@ -50,78 +50,75 @@ A professional marketing landing page showcasing all features:
 ### 2. Cron Job Monitoring
 **Location**: Dashboard → Cron Jobs Tab
 
-**Features** (inspired by [Healthchecks.io](https://healthchecks.io/)):
-- Unique ping URLs for each cron job
-- Period & Grace time configuration
+**Features**:
+- Unique ping URLs for each check
 - Cron expression support
-- Status states: New, Up, Late, Down, Paused
-- Ping event logging
-- Tags for organization
-- Detailed event history
+- Period and grace time configuration
+- Status states: new, up, late, down, paused
+- Event logging with duration tracking
+- Success/failure tracking
+- Tag-based organization
 
 **How to Use**:
 ```bash
-# 1. Create a check in the dashboard
-# 2. Copy the ping URL
-# 3. Add to your cron job:
-
-# Example 1: Daily backup
-0 2 * * * /backup.sh && curl https://your-domain.com/api/ping/abc123
-
-# Example 2: Every 5 minutes
-*/5 * * * * /health-check.sh && curl https://your-domain.com/api/ping/def456
+1. Go to Dashboard → Cron Jobs
+2. Click "Add New Check"
+3. Configure schedule (cron expression) or period/grace time
+4. Get unique ping URL
+5. Add to your script:
+   curl -X POST https://yourserver.com/api/ping/[checkId]
+6. Monitor execution in dashboard
 ```
 
-**Ping API Endpoints**:
-- GET `/api/ping/[checkId]` - Simple ping
-- POST `/api/ping/[checkId]` - Ping with data
-- HEAD `/api/ping/[checkId]` - Lightweight ping
+**Status States**:
+- 🆕 **New** - Just created, waiting for first ping
+- ✅ **Up** - Receiving pings on schedule
+- ⏰ **Late** - Ping overdue (within grace period)
+- ❌ **Down** - No ping received (grace period exceeded)
+- ⏸️ **Paused** - Monitoring temporarily disabled
 
 ---
 
-### 3. Pushgateway
-**Location**: Dashboard → Pushgateway Tab
+### 3. Metrics Gateway
+**Location**: Dashboard → Metrics Gateway Tab
 
-**Features** (compatible with Prometheus Pushgateway):
+**Features**:
 - Push custom metrics from batch jobs
-- Prometheus text format support
-- Job and instance grouping
-- Metric types: counter, gauge, histogram, summary
-- Labels support
-- Automatic metric aggregation
+- Compatible with standard metric format
+- Support for multiple metric types (gauge, counter, histogram)
+- Job and instance labeling
+- Integration with existing monitoring
+- Historical metric storage
 
 **How to Use**:
 
-**Using curl**:
+**cURL Example**:
 ```bash
-# Push metrics
-cat <<EOF | curl --data-binary @- http://your-domain.com/api/pushgateway/metrics/job/backup_job
-# HELP backup_duration_seconds Duration of backup operation
-# TYPE backup_duration_seconds gauge
-backup_duration_seconds 145.23
-
-# HELP backup_size_bytes Size of backup in bytes
-# TYPE backup_size_bytes gauge
-backup_size_bytes 5368709120
-EOF
+curl -X POST http://yourserver.com/api/pushgateway/metrics/job/backup_job \
+  -d 'backup_duration_seconds 145.23
+backup_size_bytes 5368709120'
 ```
 
-**Using Python**:
+**Python Example**:
 ```python
-from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
+import requests
 
-registry = CollectorRegistry()
-g = Gauge('backup_duration_seconds', 'Backup duration', registry=registry)
-g.set(145.23)
+metrics = '''
+backup_duration_seconds 145.23
+backup_size_bytes 5368709120
+backup_success 1
+'''
 
-push_to_gateway('your-domain.com/api/pushgateway', 
-                job='backup_job', 
-                registry=registry)
+url = 'http://yourserver.com/api/pushgateway/metrics/job/backup_job'
+requests.post(url, data=metrics)
 ```
 
-**API Endpoints**:
-- POST `/api/pushgateway/metrics/job/[job]` - Push metrics
-- DELETE `/api/pushgateway/metrics/job/[job]` - Delete metrics
+**Use Cases**:
+- Batch job metrics
+- Database backup monitoring
+- ETL process tracking
+- Scheduled task performance
+- Service mesh metrics
 
 ---
 
@@ -129,13 +126,23 @@ push_to_gateway('your-domain.com/api/pushgateway',
 **Location**: Dashboard → Incidents Tab
 
 **Features**:
-- Automatic incident detection
-- Incident types: Downtime, Slow Response, SSL Expiring
+- Automatic incident creation on downtime
+- Incident types: down, slow, ssl_expiring
 - Duration tracking
-- Resolution timestamps
-- Filter by status (Open/Resolved)
-- Detailed incident logs
-- Alert notifications
+- Resolution status
+- Historical incident log
+- Detailed incident information
+
+**Incident Types**:
+- 🔴 **Down** - Service not responding
+- 🐌 **Slow** - Response time exceeded threshold
+- 🔒 **SSL Expiring** - Certificate expiring soon
+
+**How It Works**:
+- Incidents created automatically when monitors fail
+- Duration calculated from start to resolution
+- Can view all past incidents
+- Filter by monitor or status
 
 ---
 
@@ -143,253 +150,333 @@ push_to_gateway('your-domain.com/api/pushgateway',
 **Location**: Dashboard → Status Page Tab
 
 **Features**:
-- Public-facing status pages
-- Real-time service status
-- Customizable page name and description
-- Custom domain support
-- Service uptime display
-- Response time metrics
-- Operational status indicators
-- Shareable public URLs
+- Create public-facing status pages
+- Select monitors to display
+- Custom branding (name, description)
+- Real-time status updates
+- Uptime percentages
+- Shareable public URL
+- Optional custom domain
+
+**How to Create**:
+```bash
+1. Go to Dashboard → Status Page
+2. Click "Create Status Page"
+3. Enter name and description
+4. Select monitors to include
+5. Toggle public visibility
+6. Share generated URL with team/customers
+```
+
+**Status Page Includes**:
+- Overall system status
+- Individual monitor status
+- Response times
+- Uptime percentages (90 days)
+- Last check timestamps
 
 ---
 
-### 6. Notifications & Alerts
+### 6. Telegram Notifications
 **Location**: Dashboard → Settings Tab
 
 **Features**:
-- **Telegram Integration**
-  - Instant downtime alerts
-  - Recovery notifications
-  - SSL expiry warnings (30, 14, 7 days)
-  - Performance degradation alerts
+- Real-time alerts via Telegram
+- Customizable alert messages
+- Test connection feature
+- Multiple chat support
+- Instant downtime notifications
 
-**Setup Instructions**:
-1. Create bot via [@BotFather](https://t.me/BotFather)
-2. Get Chat ID from [@userinfobot](https://t.me/userinfobot)
-3. Configure in Settings tab
-4. Send test message
+**Setup Guide**:
+```bash
+1. Create Telegram bot with @BotFather
+2. Get bot token
+3. Get your chat ID (message bot, check /getUpdates)
+4. Go to Dashboard → Settings
+5. Enter bot token and chat ID
+6. Click "Test Connection"
+7. Save configuration
+```
 
----
-
-## 📊 Additional Features
-
-### Live Status Dashboard
-- Real-time metrics display
-- Color-coded status indicators
-- Uptime percentage (24h)
-- Average response times
-- SSL certificate expiry countdown
-- Historical charts with Recharts
-- Filterable by status (All/Up/Down)
-
-### Metrics & Analytics
-- Response time graphs
-- Uptime history charts
-- Status code tracking
-- HTTP performance metrics
-- DNS lookup times
-- SSL certificate monitoring
-- Multi-timeframe analysis (6h, 12h, 24h, 48h, 1 week)
+**Alert Types**:
+- 🚨 Service down
+- ✅ Service recovered
+- 🐌 Service slow
+- 🔒 SSL expiring soon
+- ⏰ Cron job late/down
+- 📤 Custom metric alerts
 
 ---
 
-## 🎨 UI/UX Enhancements
+## 🎨 UI/UX Features
 
 ### Professional Design
-- Clean blue/white color scheme
-- Gradient hero sections
-- Card-based layouts
-- Responsive design (mobile/tablet/desktop)
-- Smooth transitions and animations
-- Hover effects
-- Loading states
-- Toast notifications
+- **Blue/White Theme** - Clean, professional appearance
+- **UptimeRobot-inspired Layout** - Familiar, intuitive interface
+- **Responsive Design** - Works on desktop, tablet, mobile
+- **Real-time Updates** - Live status without page refresh
+- **Color-coded Status** - Easy visual identification
+- **Modern Components** - Beautiful cards, charts, forms
 
-### Navigation
-- Sticky header
-- Tab-based navigation
-- Breadcrumbs
-- Quick actions
-- Search and filtering
+### Dashboard Layout
+- **Header** with branding and user info
+- **Hero Section** with key metrics
+- **Tab Navigation** for different features
+- **Stats Cards** showing uptime and performance
+- **Quick Actions** for common tasks
 
----
-
-## 🔐 Authentication & Routing
-
-### Routes
-- `/` - Public landing page
-- `/login` - Authentication page
-- `/dashboard` - Main authenticated dashboard
-- `/api/*` - API endpoints
-
-### Default Credentials
-```
-Username: admin
-Password: admin123
-```
-
-### Middleware Protection
-- Authenticated routes require session
-- Public access to landing page and ping endpoints
-- Auto-redirect authenticated users from / to /dashboard
+### Metrics Display
+- **Status Badges** - Up/Down with colors
+- **Response Time Charts** - Historical data
+- **Uptime Percentages** - 24h, 7d, 30d, 90d
+- **SSL Expiry Countdown** - Days remaining
+- **Last Check Timestamps** - Recent activity
 
 ---
 
-## 🛠️ Technical Stack
+## 📊 Advanced Features
 
-### Frontend
-- Next.js 14
-- React 18
-- TypeScript
-- Tailwind CSS
-- Recharts for data visualization
+### Multi-Location Monitoring
+- Monitor from different zones/locations
+- Compare response times across regions
+- Detect regional outages
+- Geographic redundancy
 
-### Backend APIs
-- Next.js API Routes
-- REST APIs
-- Webhook support
-- Prometheus-compatible endpoints
+### Keyword Monitoring
+- Check for specific text on pages
+- Verify dynamic content loading
+- Detect unauthorized changes
+- Content availability verification
 
-### Monitoring
-- Prometheus integration
-- Blackbox Exporter support
-- Custom metrics collection
-- Real-time updates
+### Port Monitoring
+- Monitor specific TCP ports
+- Database availability
+- Custom service monitoring
+- Network service checks
+
+### SSL Monitoring
+- Certificate expiration tracking
+- Advance warning alerts
+- Prevent service interruptions
+- Compliance verification
 
 ---
 
-## 📝 Quick Start Guide
+## 🔔 Alert Configuration
 
-### 1. Start the Application
-```bash
-npm run dev
-# or
-docker-compose up -d
+### Alert Thresholds
+- Response time alerts (milliseconds)
+- SSL expiry warnings (days)
+- Uptime percentage alerts
+- Custom metric thresholds
+
+### Notification Channels
+- Telegram (implemented)
+- Email (planned)
+- Webhooks (planned)
+- SMS (planned)
+- Slack (planned)
+
+---
+
+## 📈 Monitoring Capabilities
+
+### What You Can Monitor
+- ✅ Websites and web applications
+- ✅ REST APIs and microservices
+- ✅ Database servers (via port monitoring)
+- ✅ Custom services (via port monitoring)
+- ✅ SSL certificates
+- ✅ Cron jobs and scheduled tasks
+- ✅ Batch processes and ETL jobs
+- ✅ Server availability (ping)
+- ✅ Custom metrics from applications
+
+### Check Intervals
+- **15 seconds** - Critical services
+- **30 seconds** - Important services
+- **1 minute** - Standard services
+- **5 minutes** - Non-critical services
+- **15 minutes** - Background services
+
+---
+
+## 🚀 Performance
+
+- **Fast Response Times** - Optimized API calls
+- **Efficient Data Storage** - Smart metric aggregation
+- **Scalable Architecture** - Handle hundreds of monitors
+- **Concurrent Checking** - Multiple monitors simultaneously
+- **Caching** - Reduce redundant queries
+- **Real-time Updates** - WebSocket support (optional)
+
+---
+
+## 🔐 Security Features
+
+- **Session-based Authentication** - Secure user sessions
+- **Password Protection** - Admin access only
+- **CORS Protection** - Prevent unauthorized access
+- **Environment Variables** - Secure configuration
+- **Database Encryption** - Encrypted sensitive data
+- **Rate Limiting** - Prevent abuse (configurable)
+
+---
+
+## 📱 Mobile Support
+
+- **Responsive Design** - Works on all screen sizes
+- **Touch-optimized** - Easy mobile navigation
+- **Fast Loading** - Optimized for mobile networks
+- **Readable Text** - Appropriate font sizes
+- **Accessible Actions** - Easy to tap buttons
+
+---
+
+## 🛠️ Configuration Options
+
+### Monitor Settings
+- Check interval
+- Timeout values
+- Retry attempts
+- Alert thresholds
+- Monitor type
+- SSL verification
+- Keyword search
+
+### System Settings
+- Telegram notifications
+- Default intervals
+- Concurrent checks
+- Data retention
+- Alert cooldown
+- Feature toggles
+
+---
+
+## 📊 Data & Reports
+
+### Available Metrics
+- Uptime percentage
+- Response times (avg, min, max, p95, p99)
+- Status code distribution
+- SSL certificate status
+- Check success rate
+- Incident frequency
+- MTTR (Mean Time To Recovery)
+- MTTD (Mean Time To Detection)
+
+### Time Ranges
+- Last hour
+- Last 24 hours
+- Last 7 days
+- Last 30 days
+- Last 90 days
+- Custom ranges (planned)
+
+---
+
+## 🔧 Integration Capabilities
+
+### Current Integrations
+- Telegram Bot API
+- REST API for monitors
+- Ping endpoints for cron jobs
+- Metrics gateway API
+
+### Planned Integrations
+- Slack notifications
+- Discord webhooks
+- PagerDuty alerts
+- Email notifications
+- SMS alerts
+- Custom webhooks
+- API keys for external access
+
+---
+
+## 📁 Project Structure
+
 ```
-
-### 2. Access the Landing Page
-Visit `http://localhost:3000/`
-
-### 3. Login
-Click "Get Started" or "Log In"
-- Username: `admin`
-- Password: `admin123`
-
-### 4. Add Your First Monitor
-1. Go to Monitors tab
-2. Click "Add Monitor"
-3. Enter website URL
-4. Configure settings
-5. Click "Create Monitor"
-
-### 5. Set Up Cron Job Monitoring
-1. Go to Cron Jobs tab
-2. Click "Add Cron Check"
-3. Configure period and grace time
-4. Copy ping URL
-5. Add to your cron job script
-
-### 6. Push Custom Metrics
-1. Go to Pushgateway tab
-2. View documentation
-3. Use curl or Python client to push metrics
-
-### 7. Configure Notifications
-1. Go to Settings tab
-2. Set up Telegram bot
-3. Test notifications
+guardianeye/
+├── app/
+│   ├── components/      # React components
+│   ├── api/            # API routes
+│   ├── dashboard/      # Main dashboard
+│   ├── landing/        # Landing page
+│   └── login/          # Authentication
+├── lib/
+│   ├── auth.ts         # Authentication logic
+│   ├── database.ts     # Database operations
+│   ├── storage.ts      # Data storage
+│   ├── config.ts       # Configuration
+│   └── telegram.ts     # Telegram integration
+├── types/              # TypeScript definitions
+├── data/               # Data storage
+├── prometheus-config/  # Generated configs
+└── public/            # Static assets
+```
 
 ---
 
 ## 🎯 Use Cases
 
 ### For Developers
-- Monitor APIs and microservices
-- Track deployment pipelines
-- Get alerts for application errors
-- Monitor response times
-
-### For DevOps
+- Monitor personal projects
+- Track API availability
+- SSL certificate management
+- Debug performance issues
 - Cron job monitoring
-- Backup verification
+
+### For DevOps Teams
+- Multi-service monitoring
 - Infrastructure health checks
-- SSL certificate tracking
+- Incident response
+- Performance tracking
+- Compliance monitoring
 
 ### For Businesses
-- Customer-facing service monitoring
-- Public status pages
-- Uptime reporting
-- SLA compliance tracking
+- Customer-facing status pages
+- SLA monitoring
+- Service availability tracking
+- Customer communication
+- Business continuity
 
 ---
 
-## 🚀 Next Steps
+## 📈 Future Enhancements (Roadmap)
 
-### Recommended Actions
-1. ✅ Add your production websites
-2. ✅ Set up cron job monitoring for critical tasks
-3. ✅ Configure Telegram notifications
-4. ✅ Create a public status page
-5. ✅ Set up custom metrics with Pushgateway
-
-### Integration Ideas
-- Connect with Slack/Discord
-- Set up email alerts
-- Configure webhooks
-- Integrate with PagerDuty
-- Add Grafana dashboards
+- [ ] Custom dashboards
+- [ ] Advanced alerting rules
+- [ ] Multiple user support with roles
+- [ ] API keys for programmatic access
+- [ ] More notification channels
+- [ ] Synthetic monitoring
+- [ ] Load testing integration
+- [ ] Mobile app
+- [ ] Advanced reporting
+- [ ] Webhook endpoints
+- [ ] Integration marketplace
 
 ---
 
-## 📚 API Documentation
+## 💡 Pro Tips
 
-### Ping API
-```bash
-# GET/POST/HEAD
-/api/ping/[checkId]
-
-# Response
-{
-  "success": true,
-  "checkId": "abc123",
-  "timestamp": "2025-11-19T..."
-}
-```
-
-### Pushgateway API
-```bash
-# POST
-/api/pushgateway/metrics/job/[job]?instance=[instance]
-
-# Body: Prometheus text format
-backup_duration_seconds 145.23
-backup_size_bytes 5368709120
-```
+1. **Start Small** - Monitor your most critical services first
+2. **Use Appropriate Intervals** - Don't over-monitor
+3. **Set Alert Thresholds** - Avoid alert fatigue
+4. **Monitor SSL** - Prevent certificate expiration
+5. **Create Status Pages** - Proactive communication
+6. **Monitor Cron Jobs** - Catch silent failures
+7. **Push Custom Metrics** - Track business KPIs
+8. **Review Incidents** - Learn from downtime
+9. **Test Alerts** - Ensure notifications work
+10. **Document Procedures** - Have runbooks ready
 
 ---
 
-## 🎨 Color Scheme
+## 🎉 Conclusion
 
-- **Primary**: Blue (#3B82F6)
-- **Success**: Green (#10B981)
-- **Warning**: Yellow (#F59E0B)
-- **Error**: Red (#EF4444)
-- **Neutral**: Gray (#6B7280)
+GuardianEye provides enterprise-grade monitoring capabilities in a beautiful, easy-to-use package. Whether you're monitoring a few websites or managing a complex infrastructure, GuardianEye has the features you need to keep your services online and your users happy.
 
----
-
-## 📞 Support & Resources
-
-### References
-- [UptimeRobot](https://uptimerobot.com/) - Website monitoring inspiration
-- [Healthchecks.io](https://healthchecks.io/) - Cron job monitoring inspiration
-- [Prometheus](https://prometheus.io/) - Metrics backend
-- [Recharts](https://recharts.org/) - Charts library
-
----
-
-**Built with ❤️ for comprehensive monitoring**
-
-Last Updated: November 19, 2025
-
+**Get Started**: Visit the dashboard and add your first monitor!

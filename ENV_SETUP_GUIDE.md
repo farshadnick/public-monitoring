@@ -1,411 +1,362 @@
-# 🚀 Environment Setup & Scaling Guide
+# GuardianEye - Environment Configuration Guide
 
-## Quick Start
+## 🚀 Quick Setup
 
 ### 1. Create Environment File
 ```bash
 # Copy template
-cp env.template .env.local
+cp env.template .env
 
 # Edit with your settings
-nano .env.local
+nano .env
 ```
 
-### 2. Configure Prometheus URL
+### 2. Configure Essential Variables
+
 ```bash
-# For local development
-PROMETHEUS_URL=http://localhost:9090
-BLACKBOX_EXPORTER_URL=http://localhost:9115
+# Application
+NODE_ENV=production
+APP_PORT=3000
 
-# For Docker Compose
-PROMETHEUS_URL=http://prometheus:9090
-BLACKBOX_EXPORTER_URL=http://blackbox:9115
+# Database
+DB_HOST=mysql
+DB_NAME=monitoring
+DB_USER=monitoring
+DB_PASSWORD=secure_password_here
 
-# For external Prometheus server
-PROMETHEUS_URL=http://10.0.1.50:9090
-BLACKBOX_EXPORTER_URL=http://10.0.1.51:9115
-
-# For Kubernetes/Cloud
-PROMETHEUS_URL=http://prometheus-service.monitoring.svc.cluster.local:9090
+# Authentication
+SESSION_SECRET=generate_random_string_32_chars_min
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_PASSWORD=change_this_password
 ```
 
 ### 3. Start Application
 ```bash
-# Development
-npm run dev
-
-# Production with Docker
+# With Docker
 docker-compose up -d
+
+# Or locally
+npm run build
+npm start
 ```
 
 ---
 
-## 📋 Essential Configuration
+## 📋 Configuration Variables
 
-### Minimum Required
+### Application Settings
+
 ```bash
-# Only these 2 are required for basic operation
-PROMETHEUS_URL=http://your-prometheus:9090
-BLACKBOX_EXPORTER_URL=http://your-blackbox:9115
-```
+# Environment (development, production, staging)
+NODE_ENV=production
 
-### Recommended for Production
-```bash
-# Prometheus
-PROMETHEUS_URL=http://prometheus:9090
-PROMETHEUS_AUTH_USERNAME=admin
-PROMETHEUS_AUTH_PASSWORD=secure-password
+# Port for web server
+APP_PORT=3000
 
-# Security
-SESSION_SECRET=$(openssl rand -base64 32)
-DEFAULT_ADMIN_PASSWORD=change-this-now
-
-# Application
+# Public URL for callbacks
 NEXT_PUBLIC_APP_URL=https://monitoring.yourdomain.com
 ```
 
----
-
-## 🔧 Common Scenarios
-
-### Scenario 1: Separate Prometheus Server
-Your Prometheus is on a different machine:
+### Backend Service URLs
 
 ```bash
-# In .env.local
-PROMETHEUS_URL=http://192.168.1.100:9090
-BLACKBOX_EXPORTER_URL=http://192.168.1.100:9115
-
-# Or with domain
-PROMETHEUS_URL=http://prometheus.internal.company.com:9090
-```
-
-### Scenario 2: Secured Prometheus
-Your Prometheus has authentication:
-
-```bash
-PROMETHEUS_URL=https://prometheus.company.com:9090
-PROMETHEUS_AUTH_USERNAME=monitoring_user
-PROMETHEUS_AUTH_PASSWORD=your_secure_password
-PROMETHEUS_QUERY_TIMEOUT=60
-```
-
-### Scenario 3: Kubernetes Deployment
-Running in Kubernetes cluster:
-
-```bash
-# Use Kubernetes service names
-PROMETHEUS_URL=http://prometheus-service.monitoring:9090
-BLACKBOX_EXPORTER_URL=http://blackbox-service.monitoring:9115
-
-# Or with full DNS
-PROMETHEUS_URL=http://prometheus-service.monitoring.svc.cluster.local:9090
-```
-
-### Scenario 4: Cloud Provider (AWS/GCP/Azure)
-Using managed Prometheus or running on cloud:
-
-```bash
-# AWS with ALB
-PROMETHEUS_URL=https://prometheus.your-alb.us-east-1.elb.amazonaws.com
-
-# GCP
-PROMETHEUS_URL=https://prometheus.your-project.run.app
-
-# Azure
-PROMETHEUS_URL=https://prometheus.azurewebsites.net
-```
-
----
-
-## 🐳 Docker Compose Usage
-
-### Option 1: Use .env File (Recommended)
-```bash
-# Create .env file in project root
-cat > .env << EOF
+# Internal monitoring service addresses
+# Default for Docker Compose (use internal DNS):
 PROMETHEUS_URL=http://prometheus:9090
 BLACKBOX_EXPORTER_URL=http://blackbox:9115
-SESSION_SECRET=$(openssl rand -base64 32)
-TELEGRAM_BOT_TOKEN=your-bot-token
-EOF
 
-# Start with .env
-docker-compose up -d
-```
+# For external services:
+PROMETHEUS_URL=http://10.0.1.100:9090
+BLACKBOX_EXPORTER_URL=http://10.0.1.101:9115
 
-### Option 2: Inline Environment Variables
-```bash
-# Set variables inline
-PROMETHEUS_URL=http://custom-prometheus:9090 docker-compose up -d
-```
-
-### Option 3: Custom Environment File
-```bash
-# Use different env file
-docker-compose --env-file .env.production up -d
-```
-
----
-
-## ⚙️ Configuration Priority
-
-The application loads configuration in this order (higher priority first):
-
-1. **Environment Variables** (`.env.local`, `.env.production`)
-2. **Docker Compose** environment section
-3. **Default Values** (in `lib/config.ts`)
-
-Example:
-```bash
-# .env.local
-PROMETHEUS_URL=http://localhost:9090
-
-# docker-compose.yml
-environment:
-  - PROMETHEUS_URL=http://prometheus:9090  # This overrides .env.local
-
-# Runtime
-docker-compose up -d  # Uses http://prometheus:9090
-```
-
----
-
-## 🔍 Verify Configuration
-
-### Check Current Config
-```bash
-# View configuration (API endpoint)
-curl http://localhost:3000/api/config/debug
-
-# Check Prometheus connectivity
-curl http://localhost:3000/api/health/prometheus
-```
-
-### Test Prometheus Connection
-```bash
-# From your app server
-curl $PROMETHEUS_URL/api/v1/status/config
-
-# With authentication
-curl -u username:password $PROMETHEUS_URL/api/v1/query?query=up
-```
-
-### View Logs
-```bash
-# Docker logs
-docker-compose logs web
-
-# Check for configuration errors
-docker-compose logs web | grep -i config
-docker-compose logs web | grep -i prometheus
-```
-
----
-
-## 🛠️ Troubleshooting
-
-### Problem: "Cannot connect to Prometheus"
-
-**Solution 1**: Check URL is accessible
-```bash
-# From app container
-docker-compose exec web curl $PROMETHEUS_URL/api/v1/status/config
-```
-
-**Solution 2**: Check network connectivity
-```bash
-# Ping Prometheus from app container
-docker-compose exec web ping prometheus
-
-# Check DNS resolution
-docker-compose exec web nslookup prometheus
-```
-
-**Solution 3**: Verify Prometheus is running
-```bash
-docker-compose ps prometheus
-curl http://localhost:9090/-/healthy
-```
-
-### Problem: "Authentication failed"
-
-Check credentials:
-```bash
-# Test with curl
-curl -u $PROMETHEUS_AUTH_USERNAME:$PROMETHEUS_AUTH_PASSWORD \
-  $PROMETHEUS_URL/api/v1/query?query=up
-```
-
-### Problem: "Query timeout"
-
-Increase timeout:
-```bash
-# In .env
-PROMETHEUS_QUERY_TIMEOUT=60  # seconds
-```
-
-### Problem: "Environment variables not loading"
-
-**Check 1**: Restart services
-```bash
-docker-compose down
-docker-compose up -d
-```
-
-**Check 2**: Verify .env file location
-```bash
-# Should be in project root, same level as docker-compose.yml
-ls -la .env.local
-```
-
-**Check 3**: Check for syntax errors
-```bash
-# No spaces around =
-# Correct:
-PROMETHEUS_URL=http://localhost:9090
-
-# Incorrect:
-PROMETHEUS_URL = http://localhost:9090
-```
-
----
-
-## 📊 Performance Tuning
-
-### For Small Setup (< 50 monitors)
-```bash
-CONCURRENT_CHECKS=5
-PROMETHEUS_QUERY_TIMEOUT=10
-MAX_MONITORS_PER_USER=50
-```
-
-### For Medium Setup (50-200 monitors)
-```bash
-CONCURRENT_CHECKS=10
+# Query timeout (seconds)
 PROMETHEUS_QUERY_TIMEOUT=30
-MAX_MONITORS_PER_USER=200
+
+# Authentication (if required)
+PROMETHEUS_AUTH_USERNAME=
+PROMETHEUS_AUTH_PASSWORD=
 ```
 
-### For Large Setup (200+ monitors)
-```bash
-CONCURRENT_CHECKS=20
-PROMETHEUS_QUERY_TIMEOUT=60
-MAX_MONITORS_PER_USER=1000
+### Database Configuration
 
-# Consider multiple Prometheus instances with load balancing
+```bash
+# MySQL/MariaDB connection
+DB_HOST=mysql              # Container name or IP
+DB_PORT=3306              # Default MySQL port
+DB_NAME=monitoring        # Database name
+DB_USER=monitoring        # Database user
+DB_PASSWORD=secure_pass   # Secure password
+
+# Connection pool settings (optional)
+DB_CONNECTION_LIMIT=10
+```
+
+### Authentication & Security
+
+```bash
+# Session secret (IMPORTANT: Use a strong random string)
+SESSION_SECRET=your_very_long_and_random_secret_key_here
+
+# Default admin credentials (change after first login!)
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_PASSWORD=admin123
+
+# Session expiration (hours)
+SESSION_EXPIRATION=24
+```
+
+### Notification Settings
+
+```bash
+# Telegram Bot (optional but recommended)
+TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+TELEGRAM_CHAT_ID=your_chat_id
+
+# Email notifications (future feature)
+# SMTP_HOST=
+# SMTP_PORT=
+# SMTP_USER=
+# SMTP_PASSWORD=
+```
+
+### Monitoring Configuration
+
+```bash
+# Default check interval (seconds)
+DEFAULT_CHECK_INTERVAL=30
+
+# HTTP request timeout (seconds)
+DEFAULT_HTTP_TIMEOUT=10
+
+# Maximum concurrent checks
+CONCURRENT_CHECKS=10
+
+# Retry attempts on failure
+MAX_RETRY_ATTEMPTS=3
+
+# Alert cooldown period (minutes)
+ALERT_COOLDOWN=5
+```
+
+### Feature Toggles
+
+```bash
+# Enable/disable features
+FEATURE_CRON_MONITORING=true
+FEATURE_PUSHGATEWAY=true
+FEATURE_STATUS_PAGES=true
+FEATURE_TELEGRAM_ALERTS=true
+FEATURE_EMAIL_ALERTS=false
+```
+
+### Logging
+
+```bash
+# Log level (error, warn, info, debug)
+LOG_LEVEL=info
+
+# Log format (json, pretty)
+LOG_FORMAT=json
+
+# Enable request logging
+LOG_REQUESTS=true
 ```
 
 ---
 
 ## 🔐 Security Best Practices
 
-### 1. Secure Passwords
+### Session Secret
 ```bash
-# Generate strong session secret
-SESSION_SECRET=$(openssl rand -base64 32)
+# Generate a secure random string
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
-# Change default admin password
-DEFAULT_ADMIN_PASSWORD=$(openssl rand -base64 16)
+# Or use
+openssl rand -hex 32
 ```
 
-### 2. Use HTTPS
+### Password Requirements
+- Minimum 8 characters
+- Mix of uppercase, lowercase, numbers
+- Special characters recommended
+- Change default passwords immediately
+
+### Database Security
+- Use strong passwords
+- Limit database access to specific IPs
+- Use separate user for application
+- Regular backups
+
+---
+
+## 🌍 Deployment Scenarios
+
+### Local Development
 ```bash
-# Always use HTTPS in production
+NODE_ENV=development
+APP_PORT=3000
+DB_HOST=localhost
+PROMETHEUS_URL=http://localhost:9090
+BLACKBOX_EXPORTER_URL=http://localhost:9115
+```
+
+### Docker Compose
+```bash
+NODE_ENV=production
+APP_PORT=3000
+DB_HOST=mysql                    # Use service name
+PROMETHEUS_URL=http://prometheus:9090
+BLACKBOX_EXPORTER_URL=http://blackbox:9115
+```
+
+### Cloud Deployment
+```bash
+NODE_ENV=production
+APP_PORT=3000
 NEXT_PUBLIC_APP_URL=https://monitoring.yourdomain.com
-PROMETHEUS_URL=https://prometheus.yourdomain.com:9090
+DB_HOST=database-server.internal
+PROMETHEUS_URL=http://monitoring-backend:9090
 ```
 
-### 3. Restrict Access
+### High Availability
 ```bash
-# Add Prometheus authentication
-PROMETHEUS_AUTH_USERNAME=monitoring_service
-PROMETHEUS_AUTH_PASSWORD=secure_generated_password
+NODE_ENV=production
+DB_HOST=db-cluster.internal
+PROMETHEUS_URL=http://prom-lb.internal:9090
+SESSION_EXPIRATION=48
+CONCURRENT_CHECKS=20
 ```
 
-### 4. Secure .env Files
+---
+
+## 📊 Performance Tuning
+
+### Light Usage (< 20 monitors)
 ```bash
-# Never commit .env files
-echo ".env.local" >> .gitignore
-echo ".env.production" >> .gitignore
+DEFAULT_CHECK_INTERVAL=60
+DEFAULT_HTTP_TIMEOUT=10
+CONCURRENT_CHECKS=5
+DB_CONNECTION_LIMIT=5
+```
 
-# Set proper permissions
-chmod 600 .env.local
+### Medium Usage (20-100 monitors)
+```bash
+DEFAULT_CHECK_INTERVAL=30
+DEFAULT_HTTP_TIMEOUT=15
+CONCURRENT_CHECKS=10
+DB_CONNECTION_LIMIT=10
+```
+
+### Heavy Usage (100+ monitors)
+```bash
+DEFAULT_CHECK_INTERVAL=60
+DEFAULT_HTTP_TIMEOUT=20
+CONCURRENT_CHECKS=20
+DB_CONNECTION_LIMIT=20
+PROMETHEUS_QUERY_TIMEOUT=60
 ```
 
 ---
 
-## 📦 Production Checklist
+## 🔍 Troubleshooting
 
-Before going to production, ensure:
+### Environment Not Loading
 
-- [ ] Changed `SESSION_SECRET` from default
-- [ ] Changed `DEFAULT_ADMIN_PASSWORD` from default
-- [ ] Set correct `PROMETHEUS_URL` for your environment
-- [ ] Set correct `NEXT_PUBLIC_APP_URL`
-- [ ] Configured `PROMETHEUS_AUTH_*` if Prometheus is secured
-- [ ] Set up `TELEGRAM_BOT_TOKEN` for alerts
-- [ ] Configured database credentials (not defaults)
-- [ ] Set `NODE_ENV=production`
-- [ ] Enabled HTTPS/TLS
-- [ ] Set up backups (`AUTO_BACKUP_ENABLED=true`)
-- [ ] Configured log level appropriately
-- [ ] Tested Prometheus connectivity
-- [ ] Verified monitoring works end-to-end
+**Check file location**:
+```bash
+# .env file should be in project root
+ls -la .env
+
+# Or use .env.local for Next.js
+ls -la .env.local
+```
+
+**Check file format**:
+- No spaces around `=`
+- No quotes needed unless value has spaces
+- No comments on same line as variable
+
+### Connection Issues
+
+**Test backend connectivity**:
+```bash
+# Test from container
+docker exec guardianeye-web curl -I http://prometheus:9090
+
+# Test from host
+curl -I http://localhost:9090
+```
+
+**Check database connection**:
+```bash
+docker exec guardianeye-web nc -zv mysql 3306
+```
+
+### Variable Not Working
+
+**Check variable name** - Must match exactly (case-sensitive)
+
+**Restart services** after changing .env:
+```bash
+docker-compose down
+docker-compose up -d
+```
+
+**Verify in container**:
+```bash
+docker exec guardianeye-web env | grep PROMETHEUS
+```
 
 ---
 
-## 🚦 Quick Commands
+## 📝 Environment File Template
+
+See `env.template` for a complete template with all available variables and descriptions.
 
 ```bash
-# Create .env from template
-cp env.template .env.local
-
-# Generate secure random string
-openssl rand -base64 32
-
-# Test Prometheus connection
-curl $(grep PROMETHEUS_URL .env.local | cut -d'=' -f2)/api/v1/status/config
-
-# Start with custom env
-docker-compose --env-file .env.production up -d
-
-# View environment in container
-docker-compose exec web env | grep PROMETHEUS
-
-# Restart after config change
-docker-compose restart web
-
-# View logs
-docker-compose logs -f web
+# Copy and customize
+cp env.template .env
+nano .env
 ```
 
 ---
 
-## 📚 Related Documentation
+## ✅ Validation Checklist
 
-- [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Complete deployment scenarios
-- [FEATURES_SUMMARY.md](./FEATURES_SUMMARY.md) - All features and how to use them
-- [env.template](./env.template) - Template with all available variables
+Before deploying:
 
----
-
-## 💡 Tips
-
-1. **Use descriptive service names** in your URLs
-2. **Keep .env files out of version control**
-3. **Use different .env files** for dev/staging/prod
-4. **Test configuration changes** in development first
-5. **Monitor the monitor** - set up alerts for the monitoring system itself
-6. **Document custom settings** for your team
-7. **Use configuration management** tools (Vault, AWS Secrets Manager) for sensitive data
+- [ ] All required variables are set
+- [ ] Strong SESSION_SECRET generated
+- [ ] Default admin password changed
+- [ ] Database credentials configured
+- [ ] Backend service URLs correct
+- [ ] Feature flags set appropriately
+- [ ] Telegram bot configured (if using)
+- [ ] Logging level appropriate
+- [ ] Timeout values reasonable
+- [ ] File permissions secure (chmod 600 .env)
 
 ---
 
-**Need Help?**
-- Check logs: `docker-compose logs web`
-- Validate config: API at `/api/config/debug`
-- Test connectivity: `curl $PROMETHEUS_URL/-/healthy`
+## 🔄 Updating Configuration
 
-**Last Updated**: November 19, 2025
+### Without Downtime
+Most variables can be changed and applied with:
+```bash
+docker-compose up -d
+```
 
+### Requiring Restart
+Some critical variables require full restart:
+- DB_HOST, DB_PORT, DB_NAME
+- SESSION_SECRET
+- NODE_ENV
+
+```bash
+docker-compose down
+docker-compose up -d
+```
+
+---
+
+**Pro Tip**: Keep your `.env` file secure and never commit it to version control! Add it to `.gitignore`.

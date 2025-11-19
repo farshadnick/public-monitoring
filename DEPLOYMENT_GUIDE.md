@@ -1,561 +1,369 @@
-# Deployment & Scaling Guide
+# GuardianEye - Deployment & Scaling Guide
 
-## 🚀 Environment Configuration
+## 🚀 Quick Deploy with Docker
 
-### Quick Setup
-
-1. **Copy the environment template**:
+### 1. Clone Repository
 ```bash
-cp env.template .env.local
+git clone <your-repo-url>
+cd guardianeye
 ```
 
-2. **Configure Prometheus address**:
+### 2. Configure Environment
 ```bash
-# Edit .env.local
-PROMETHEUS_URL=http://your-prometheus-server:9090
-BLACKBOX_EXPORTER_URL=http://your-blackbox-exporter:9115
+# Copy environment template
+cp env.template .env
+
+# Edit configuration
+nano .env
 ```
 
-3. **Start the application**:
+### 3. Start Services
 ```bash
-npm run dev
-# or for production:
-npm run build && npm start
-```
-
----
-
-## 📋 Environment Variables
-
-### Critical Configuration
-
-#### Prometheus Settings
-```bash
-# Required: Prometheus server address
-PROMETHEUS_URL=http://prometheus:9090
-
-# Optional: Query timeout (seconds)
-PROMETHEUS_QUERY_TIMEOUT=30
-
-# Optional: Basic authentication
-PROMETHEUS_AUTH_USERNAME=admin
-PROMETHEUS_AUTH_PASSWORD=secret
-```
-
-#### Blackbox Exporter
-```bash
-# Required: Blackbox Exporter address
-BLACKBOX_EXPORTER_URL=http://blackbox-exporter:9115
-```
-
----
-
-## 🏗️ Deployment Scenarios
-
-### Scenario 1: Local Development
-
-```bash
-# .env.local
-PROMETHEUS_URL=http://localhost:9090
-BLACKBOX_EXPORTER_URL=http://localhost:9115
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-**Docker Compose**:
-```bash
+# Start all services
 docker-compose up -d
+
+# View logs
+docker-compose logs -f
 ```
+
+### 4. Access Dashboard
+Open http://your-server-ip:3000
 
 ---
 
-### Scenario 2: Production (Single Server)
+## 📋 Environment Configuration
+
+### Essential Settings
 
 ```bash
-# .env.production
+# Application
 NODE_ENV=production
-PROMETHEUS_URL=http://prometheus:9090
-BLACKBOX_EXPORTER_URL=http://blackbox-exporter:9115
-NEXT_PUBLIC_APP_URL=https://monitor.yourdomain.com
-
-# Security
-SESSION_SECRET=your-secure-random-string-here
-DEFAULT_ADMIN_PASSWORD=change-this-immediately
+APP_PORT=3000
+NEXT_PUBLIC_APP_URL=https://your-domain.com
 
 # Database
 DB_HOST=mysql
+DB_PORT=3306
 DB_NAME=monitoring
-DB_USER=monitoring_user
-DB_PASSWORD=secure-password
+DB_USER=monitoring
+DB_PASSWORD=your_secure_password
+
+# Authentication
+SESSION_SECRET=generate_a_long_random_string_here
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_PASSWORD=change_this_password
+
+# Telegram Notifications (Optional)
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
 ```
 
-**Docker Compose** (Production):
-```yaml
-version: '3.8'
+### Security Recommendations
 
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - PROMETHEUS_URL=http://prometheus:9090
-      - BLACKBOX_EXPORTER_URL=http://blackbox-exporter:9115
-      - DB_HOST=mysql
-    depends_on:
-      - prometheus
-      - blackbox-exporter
-      - mysql
-    restart: unless-stopped
-
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus-config:/etc/prometheus
-      - prometheus-data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-    restart: unless-stopped
-
-  blackbox-exporter:
-    image: prom/blackbox-exporter:latest
-    ports:
-      - "9115:9115"
-    volumes:
-      - ./prometheus-config/blackbox.yml:/etc/blackbox/blackbox.yml
-    restart: unless-stopped
-
-  mysql:
-    image: mysql:8
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: monitoring
-      MYSQL_USER: monitoring_user
-      MYSQL_PASSWORD: secure-password
-    volumes:
-      - mysql-data:/var/lib/mysql
-    restart: unless-stopped
-
-volumes:
-  prometheus-data:
-  mysql-data:
-```
+1. **Change Default Credentials**: Always change admin password
+2. **Strong Session Secret**: Use a cryptographically random string (32+ characters)
+3. **Database Password**: Use a strong, unique password
+4. **HTTPS**: Enable SSL/TLS in production
+5. **Firewall**: Restrict access to backend services
 
 ---
 
-### Scenario 3: Kubernetes / Cloud
+## 🏗️ Deployment Options
 
-#### Environment Variables via ConfigMap
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: monitoring-config
-data:
-  PROMETHEUS_URL: "http://prometheus-service:9090"
-  BLACKBOX_EXPORTER_URL: "http://blackbox-service:9115"
-  NEXT_PUBLIC_APP_URL: "https://monitoring.example.com"
+### Option 1: Single Server (Recommended for Small Teams)
+
+```bash
+# Use docker-compose.yml
+docker-compose up -d
 ```
 
-#### Secrets
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: monitoring-secrets
-type: Opaque
-stringData:
-  SESSION_SECRET: "your-secure-random-string"
-  DB_PASSWORD: "your-db-password"
-  PROMETHEUS_AUTH_USERNAME: "admin"
-  PROMETHEUS_AUTH_PASSWORD: "password"
+**Pros**: Simple, everything in one place
+**Cons**: Single point of failure
+**Best for**: Up to 100 monitors, small teams
+
+### Option 2: Distributed (For Large Scale)
+
+Deploy components separately:
+
+```bash
+# Web application server
+docker run -d -p 3000:3000 \
+  -e DB_HOST=db-server \
+  -e NODE_ENV=production \
+  guardianeye-web
+
+# Database server (separate machine)
+docker run -d -p 3306:3306 \
+  -e MYSQL_ROOT_PASSWORD=secure_password \
+  mysql:8
+
+# Backend monitoring services (separate machines)
+# See Environment Variables section
 ```
 
-#### Deployment
+**Pros**: Scalable, fault-tolerant
+**Cons**: More complex setup
+**Best for**: 100+ monitors, high availability requirements
+
+### Option 3: Kubernetes
+
 ```yaml
+# Example deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: monitoring-app
+  name: guardianeye
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: monitoring
+      app: guardianeye
   template:
     metadata:
       labels:
-        app: monitoring
+        app: guardianeye
     spec:
       containers:
-      - name: app
-        image: monitoring-app:latest
+      - name: web
+        image: guardianeye:latest
         ports:
         - containerPort: 3000
-        envFrom:
-        - configMapRef:
-            name: monitoring-config
-        - secretRef:
-            name: monitoring-secrets
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DB_HOST
+          value: "mysql-service"
+        # Add more environment variables
 ```
 
 ---
 
-### Scenario 4: Distributed / Multi-Region
+## 🔧 Production Checklist
+
+### Before Deployment
+
+- [ ] Change default admin password
+- [ ] Set strong SESSION_SECRET
+- [ ] Configure secure database credentials
+- [ ] Set up HTTPS/SSL certificates
+- [ ] Configure backup strategy
+- [ ] Set up monitoring alerts (Telegram)
+- [ ] Test failover scenarios
+- [ ] Document access procedures
+
+### Security Hardening
+
+- [ ] Enable firewall rules
+- [ ] Use strong passwords
+- [ ] Limit database access
+- [ ] Enable HTTPS only
+- [ ] Regular security updates
+- [ ] Implement rate limiting
+- [ ] Set up intrusion detection
+
+### Performance Tuning
+
+- [ ] Adjust check intervals based on needs
+- [ ] Configure timeout values appropriately
+- [ ] Set concurrent check limits
+- [ ] Enable caching where appropriate
+- [ ] Monitor resource usage
+- [ ] Scale horizontally if needed
+
+---
+
+## 📊 Scaling Guidelines
+
+### Vertical Scaling (Increase Resources)
+
+**When to use**: Simple, works for most cases
 
 ```bash
-# Region 1 - US East
-PROMETHEUS_URL=http://prometheus-us-east.internal:9090
-BLACKBOX_EXPORTER_URL=http://blackbox-us-east.internal:9115
+# Increase Docker memory limits
+docker-compose down
+# Edit docker-compose.yml
+services:
+  web:
+    mem_limit: 2g
+    cpus: 2
+docker-compose up -d
+```
 
-# Region 2 - EU West  
-PROMETHEUS_URL=http://prometheus-eu-west.internal:9090
-BLACKBOX_EXPORTER_URL=http://blackbox-eu-west.internal:9115
+### Horizontal Scaling (Multiple Instances)
 
-# Use Prometheus federation or remote write for aggregation
+**When to use**: High availability, load distribution
+
+1. Deploy multiple web instances
+2. Use load balancer (Nginx, HAProxy, etc.)
+3. Share database and backend services
+4. Configure session persistence
+
+### Database Scaling
+
+**For heavy usage**:
+- Use read replicas
+- Implement connection pooling
+- Optimize queries
+- Archive old data regularly
+
+---
+
+## 🔄 Backup & Recovery
+
+### Database Backup
+
+```bash
+# Backup database
+docker exec mysql mysqldump -u root -p monitoring > backup.sql
+
+# Restore database
+docker exec -i mysql mysql -u root -p monitoring < backup.sql
+```
+
+### Configuration Backup
+
+```bash
+# Backup configuration
+tar -czf backup-$(date +%Y%m%d).tar.gz \
+  .env \
+  data/ \
+  prometheus-config/
+
+# Restore
+tar -xzf backup-YYYYMMDD.tar.gz
+```
+
+### Automated Backups
+
+```bash
+# Add to crontab
+0 2 * * * /path/to/backup-script.sh
 ```
 
 ---
 
-## 🔐 Security Best Practices
+## 🌐 Reverse Proxy Configuration
 
-### 1. Change Default Credentials
-```bash
-# NEVER use these in production:
-DEFAULT_ADMIN_USERNAME=admin
-DEFAULT_ADMIN_PASSWORD=admin123
+### Nginx Example
 
-# Change to:
-DEFAULT_ADMIN_USERNAME=your-custom-admin
-DEFAULT_ADMIN_PASSWORD=very-secure-password-here
-```
-
-### 2. Secure Session Secret
-```bash
-# Generate a secure random string:
-openssl rand -base64 32
-
-# Set in .env:
-SESSION_SECRET=generated-random-string
-```
-
-### 3. Prometheus Authentication
-If your Prometheus is exposed:
-```bash
-PROMETHEUS_AUTH_USERNAME=prometheus-user
-PROMETHEUS_AUTH_PASSWORD=secure-prometheus-password
-```
-
-### 4. Database Security
-```bash
-DB_PASSWORD=use-strong-password-here
-# Don't use root in production
-DB_USER=monitoring_app_user
-```
-
----
-
-## 📊 Scaling Strategies
-
-### Horizontal Scaling
-
-#### Load Balancer Configuration
 ```nginx
-upstream monitoring_app {
-    server app1:3000;
-    server app2:3000;
-    server app3:3000;
-}
-
 server {
     listen 80;
-    server_name monitor.example.com;
-
+    server_name monitoring.yourdomain.com;
+    
     location / {
-        proxy_pass http://monitoring_app;
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
     }
 }
 ```
 
-#### Shared Prometheus
-All app instances should point to the same Prometheus:
+### SSL/TLS with Let's Encrypt
+
 ```bash
-PROMETHEUS_URL=http://prometheus-shared.internal:9090
-```
+# Install certbot
+sudo apt install certbot python3-certbot-nginx
 
-### Vertical Scaling
+# Get certificate
+sudo certbot --nginx -d monitoring.yourdomain.com
 
-Increase resources in docker-compose.yml:
-```yaml
-services:
-  prometheus:
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 4G
-        reservations:
-          cpus: '1.0'
-          memory: 2G
+# Auto-renewal (already configured by certbot)
 ```
 
 ---
 
-## 🔍 Monitoring the Monitor
+## 📈 Monitoring the Monitor
 
-### Health Check Endpoint
+### Health Checks
+
 ```bash
+# Application health
 curl http://localhost:3000/api/health
+
+# Database connection
+docker exec mysql mysqladmin ping -h localhost
+
+# Services status
+docker-compose ps
 ```
 
-### Prometheus Metrics
-The app exposes its own metrics at:
-```bash
-curl http://localhost:3000/api/metrics
-```
+### Resource Monitoring
 
-### Configuration Validation
-Check if configuration is valid:
 ```bash
-npm run validate-config
+# Container stats
+docker stats
+
+# Disk usage
+df -h
+
+# Memory usage
+free -m
 ```
 
 ---
 
-## 🛠️ Troubleshooting
+## 🆘 Troubleshooting
 
-### Problem: Cannot connect to Prometheus
+### Common Issues
 
-**Check 1**: Verify Prometheus URL
+**Application won't start**
 ```bash
-curl $PROMETHEUS_URL/api/v1/status/config
+# Check logs
+docker-compose logs web
+
+# Check environment variables
+docker-compose config
+
+# Rebuild
+docker-compose build --no-cache
 ```
 
-**Check 2**: Check authentication
+**Database connection errors**
 ```bash
-curl -u username:password $PROMETHEUS_URL/api/v1/query?query=up
+# Check database status
+docker-compose ps mysql
+
+# Check database logs
+docker-compose logs mysql
+
+# Test connection
+docker exec web nc -zv mysql 3306
 ```
 
-**Check 3**: Network connectivity
+**Slow performance**
 ```bash
-docker-compose exec app ping prometheus
-```
+# Check resource usage
+docker stats
 
-### Problem: Slow queries
+# Check check intervals
+# Reduce frequency for non-critical monitors
 
-**Solution**: Increase timeout
-```bash
-PROMETHEUS_QUERY_TIMEOUT=60
-```
-
-### Problem: Too many monitors
-
-**Solution**: Increase concurrent check limit
-```bash
-CONCURRENT_CHECKS=20
-MAX_MONITORS_PER_USER=200
+# Scale up resources
+# Increase memory/CPU limits
 ```
 
 ---
 
-## 📈 Performance Tuning
+## 📚 Additional Resources
 
-### Prometheus Configuration
-```yaml
-# prometheus.yml
-global:
-  scrape_interval: 30s  # Match DEFAULT_CHECK_INTERVAL
-  evaluation_interval: 30s
-
-# Enable compression
-storage:
-  tsdb:
-    compression: true
-```
-
-### Application Tuning
-```bash
-# Cache status queries
-STATUS_CACHE_TTL=30
-
-# Limit concurrent checks
-CONCURRENT_CHECKS=10
-
-# Reduce metrics retention
-METRICS_RETENTION_DAYS=30
-```
+- See `README.md` for feature overview
+- See `QUICKSTART.md` for basic usage
+- See `env.template` for all configuration options
 
 ---
 
-## 🔄 High Availability Setup
+## 🤝 Support
 
-### Database Replication
-```yaml
-services:
-  mysql-primary:
-    image: mysql:8
-    environment:
-      MYSQL_REPLICATION_MODE: master
-    
-  mysql-replica:
-    image: mysql:8
-    environment:
-      MYSQL_REPLICATION_MODE: slave
-      MYSQL_MASTER_HOST: mysql-primary
-```
-
-### Prometheus High Availability
-```yaml
-services:
-  prometheus-1:
-    image: prom/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.enable-lifecycle'
-
-  prometheus-2:
-    image: prom/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.enable-lifecycle'
-```
-
-Use load balancer to distribute queries:
-```bash
-PROMETHEUS_URL=http://prometheus-lb:9090
-```
+For issues or questions:
+1. Check troubleshooting section above
+2. Review logs for error messages
+3. Verify configuration settings
+4. Check system resources
 
 ---
 
-## 📦 Backup & Recovery
-
-### Database Backup
-```bash
-# Automated backup
-AUTO_BACKUP_ENABLED=true
-BACKUP_INTERVAL_HOURS=24
-BACKUP_RETENTION_DAYS=30
-BACKUP_PATH=/backups
-
-# Manual backup
-docker-compose exec mysql mysqldump -u root -p monitoring > backup.sql
-```
-
-### Prometheus Data Backup
-```bash
-# Backup Prometheus data
-docker-compose exec prometheus promtool tsdb snapshot /prometheus
-```
-
----
-
-## 🌐 Network Configuration
-
-### Firewall Rules
-```bash
-# Application
-allow 3000/tcp
-
-# Prometheus
-allow 9090/tcp from app_subnet
-
-# Blackbox Exporter
-allow 9115/tcp from app_subnet
-```
-
-### Internal Network
-```yaml
-networks:
-  monitoring:
-    internal: true
-  frontend:
-    internal: false
-```
-
----
-
-## 📝 Configuration Examples
-
-### Small Setup (< 50 monitors)
-```bash
-PROMETHEUS_URL=http://localhost:9090
-CONCURRENT_CHECKS=5
-MAX_MONITORS_PER_USER=50
-METRICS_RETENTION_DAYS=30
-```
-
-### Medium Setup (50-200 monitors)
-```bash
-PROMETHEUS_URL=http://prometheus:9090
-CONCURRENT_CHECKS=10
-MAX_MONITORS_PER_USER=200
-METRICS_RETENTION_DAYS=60
-```
-
-### Large Setup (200+ monitors)
-```bash
-PROMETHEUS_URL=http://prometheus-cluster:9090
-CONCURRENT_CHECKS=20
-MAX_MONITORS_PER_USER=1000
-METRICS_RETENTION_DAYS=90
-# Consider horizontal scaling
-```
-
----
-
-## 🚨 Alerts Configuration
-
-### Telegram Setup
-```bash
-TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
-TELEGRAM_CHAT_ID=123456789
-ALERTS_ENABLED=true
-ALERT_COOLDOWN_MINUTES=5
-```
-
-### Multiple Channels
-```bash
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
-PAGERDUTY_INTEGRATION_KEY=your-key-here
-```
-
----
-
-## 📞 Support
-
-### Configuration Validation
-Run startup validation:
-```bash
-npm run start 2>&1 | grep -i "config"
-```
-
-### Debug Mode
-```bash
-LOG_LEVEL=debug
-VERBOSE_LOGGING=true
-```
-
-### Get Current Configuration
-```bash
-curl http://localhost:3000/api/config/debug
-```
-
----
-
-**Last Updated**: November 19, 2025
-**Version**: 1.0.0
-
+**Remember**: Security is paramount. Never expose sensitive services to the internet without proper authentication and encryption!
