@@ -37,6 +37,7 @@ Open http://your-server-ip:3000
 
 ```bash
 # Application
+# ⚠️ NODE_ENV must be: development, production, or test (Next.js standard)
 NODE_ENV=production
 APP_PORT=3000
 NEXT_PUBLIC_APP_URL=https://your-domain.com

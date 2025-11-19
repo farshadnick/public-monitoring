@@ -47,7 +47,9 @@ npm start
 ### Application Settings
 
 ```bash
-# Environment (development, production, staging)
+# Environment - MUST be one of: development, production, test
+# ⚠️ WARNING: Next.js only supports these three values!
+# Do NOT use: staging, local, or any custom values
 NODE_ENV=production
 
 # Port for web server
