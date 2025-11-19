@@ -3,16 +3,24 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const session = request.cookies.get('session');
-  const isLoginPage = request.nextUrl.pathname === '/login';
-  const isApiAuth = request.nextUrl.pathname === '/api/auth/login';
+  const { pathname } = request.nextUrl;
   
-  // Allow access to login page and auth API
-  if (isLoginPage || isApiAuth) {
+  // Public routes that don't require authentication
+  const publicRoutes = ['/', '/login', '/api/auth/login', '/api/ping'];
+  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith('/api/ping/'));
+  const isApiAuth = pathname === '/api/auth/login';
+  
+  // Allow access to public routes
+  if (isPublicRoute && !isApiAuth) {
+    // If user is authenticated and visits root, redirect to dashboard
+    if (session && pathname === '/') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
     return NextResponse.next();
   }
   
-  // Redirect to login if no session
-  if (!session) {
+  // Redirect to login if no session for protected routes
+  if (!session && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
   

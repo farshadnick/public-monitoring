@@ -30,19 +30,51 @@ services:
       dockerfile: Dockerfile
     container_name: monitoring-web-app
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     volumes:
       - ./data:/app/data
       - ./prometheus-config:/app/prometheus-config
     environment:
-      - NODE_ENV=production
-      - PROMETHEUS_URL=http://prometheus:9090
-      - BLACKBOX_URL=http://blackbox:9115
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USER=monitoring
-      - MYSQL_PASSWORD=monitoring_password
-      - MYSQL_DATABASE=monitoring
+      # Application
+      - NODE_ENV=${NODE_ENV:-production}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      
+      # Prometheus & Blackbox
+      - PROMETHEUS_URL=${PROMETHEUS_URL:-http://prometheus:9090}
+      - BLACKBOX_EXPORTER_URL=${BLACKBOX_EXPORTER_URL:-http://blackbox:9115}
+      - PROMETHEUS_QUERY_TIMEOUT=${PROMETHEUS_QUERY_TIMEOUT:-30}
+      - PROMETHEUS_AUTH_USERNAME=${PROMETHEUS_AUTH_USERNAME:-}
+      - PROMETHEUS_AUTH_PASSWORD=${PROMETHEUS_AUTH_PASSWORD:-}
+      
+      # Database
+      - DB_HOST=${DB_HOST:-mysql}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_NAME=${DB_NAME:-monitoring}
+      - DB_USER=${DB_USER:-monitoring}
+      - DB_PASSWORD=${DB_PASSWORD:-monitoring_password}
+      
+      # Authentication
+      - SESSION_SECRET=${SESSION_SECRET:-change-this-in-production}
+      - DEFAULT_ADMIN_USERNAME=${DEFAULT_ADMIN_USERNAME:-admin}
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:-admin123}
+      
+      # Telegram
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      
+      # Monitoring Settings
+      - DEFAULT_CHECK_INTERVAL=${DEFAULT_CHECK_INTERVAL:-30}
+      - DEFAULT_HTTP_TIMEOUT=${DEFAULT_HTTP_TIMEOUT:-10}
+      - CONCURRENT_CHECKS=${CONCURRENT_CHECKS:-10}
+      
+      # Features
+      - FEATURE_CRON_MONITORING=${FEATURE_CRON_MONITORING:-true}
+      - FEATURE_PUSHGATEWAY=${FEATURE_PUSHGATEWAY:-true}
+      - FEATURE_STATUS_PAGES=${FEATURE_STATUS_PAGES:-true}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      
     restart: unless-stopped
     networks:
       - monitoring

@@ -1,3 +1,5 @@
+import config from './config';
+
 export interface PrometheusMetric {
   url: string;
   name: string;
@@ -9,35 +11,77 @@ export interface PrometheusMetric {
   uptime: number;
 }
 
-const PROMETHEUS_URL = process.env.PROMETHEUS_URL || 'http://prometheus:9090';
-const BLACKBOX_URL = process.env.BLACKBOX_URL || 'http://blackbox:9115';
+/**
+ * Create authentication headers if configured
+ */
+function getAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
 
+  if (config.prometheus.auth.username && config.prometheus.auth.password) {
+    // Use btoa for base64 encoding in browser/edge environments
+    const auth = typeof btoa !== 'undefined'
+      ? btoa(`${config.prometheus.auth.username}:${config.prometheus.auth.password}`)
+      : Buffer.from(`${config.prometheus.auth.username}:${config.prometheus.auth.password}`).toString('base64');
+    headers['Authorization'] = `Basic ${auth}`;
+  }
+
+  return headers;
+}
+
+/**
+ * Query Prometheus with configured URL and authentication
+ */
 export async function queryPrometheus(query: string): Promise<any> {
   try {
-    const response = await fetch(`${PROMETHEUS_URL}/api/v1/query?query=${encodeURIComponent(query)}`, {
-      next: { revalidate: 0 }, // Don't cache
+    const url = `${config.prometheus.url}/api/v1/query?query=${encodeURIComponent(query)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.prometheus.timeout * 1000);
+
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+      signal: controller.signal,
+      cache: 'no-store', // Don't cache
     });
+
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
-      throw new Error('Prometheus query failed');
+      throw new Error(`Prometheus query failed: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
     return data.data.result;
   } catch (error) {
-    console.error('Prometheus query error:', error);
+    if (error instanceof Error) {
+      console.error('Prometheus query error:', error.message);
+      if (error.name === 'AbortError') {
+        console.error(`Query timeout after ${config.prometheus.timeout}s`);
+      }
+    }
     return [];
   }
 }
 
+/**
+ * Probe URL directly via Blackbox Exporter
+ */
 export async function probeDirectly(url: string): Promise<any> {
   try {
-    const response = await fetch(`${BLACKBOX_URL}/probe?target=${encodeURIComponent(url)}&module=http_2xx`, {
-      next: { revalidate: 0 },
+    const probeUrl = `${config.blackbox.url}/probe?target=${encodeURIComponent(url)}&module=http_2xx`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.monitoring.defaultTimeout * 1000);
+
+    const response = await fetch(probeUrl, {
+      signal: controller.signal,
+      cache: 'no-store',
     });
+
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
-      throw new Error('Blackbox probe failed');
+      throw new Error(`Blackbox probe failed: ${response.status}`);
     }
     
     const text = await response.text();
@@ -57,7 +101,9 @@ export async function probeDirectly(url: string): Promise<any> {
     
     return metrics;
   } catch (error) {
-    console.error('Blackbox probe error:', error);
+    if (error instanceof Error) {
+      console.error('Blackbox probe error:', error.message);
+    }
     return null;
   }
 }

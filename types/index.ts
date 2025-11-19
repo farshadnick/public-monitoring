@@ -41,6 +41,46 @@ export interface StatusPageConfig {
   customDomain?: string;
 }
 
+export interface CronCheck {
+  id: string;
+  name: string;
+  description?: string;
+  tags: string[];
+  schedule?: string; // cron expression
+  period?: number; // in seconds
+  grace?: number; // grace period in seconds
+  status: 'new' | 'up' | 'late' | 'down' | 'paused';
+  lastPing?: string;
+  nextExpectedPing?: string;
+  pingUrl: string;
+  createdAt: string;
+  updatedAt: string;
+  totalPings: number;
+  failureCount: number;
+}
+
+export interface CronPingEvent {
+  id: string;
+  checkId: string;
+  timestamp: string;
+  duration?: number; // in milliseconds
+  userAgent?: string;
+  remoteAddr?: string;
+  method: string;
+  body?: string;
+  success: boolean;
+}
+
+export interface CronAlert {
+  id: string;
+  checkId: string;
+  checkName: string;
+  type: 'late' | 'down' | 'up';
+  timestamp: string;
+  message: string;
+  notified: boolean;
+}
+
 export interface PrometheusConfig {
   scrape_configs: ScrapeConfig[];
 }
