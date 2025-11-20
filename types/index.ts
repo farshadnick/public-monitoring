@@ -9,7 +9,8 @@ export interface MonitoredURL {
   monitorType?: 'http' | 'https' | 'ping' | 'port' | 'keyword';
   keyword?: string;
   port?: number;
-  alertThreshold?: number; // Response time in ms
+  alertThreshold?: number; // Response time in ms - when exceeded, status becomes "slow"
+  downThreshold?: number; // Response time in ms - when exceeded, status becomes "down"
   sslMonitoring?: boolean;
 }
 

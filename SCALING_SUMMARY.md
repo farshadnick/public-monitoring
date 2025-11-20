@@ -1,4 +1,4 @@
-# ✅ GuardianEye - Scaling Configuration Complete
+# ✅ Watcher - Scaling Configuration Complete
 
 ## What's Been Added
 
@@ -430,6 +430,6 @@ CONCURRENT_CHECKS=5
 
 ---
 
-**GuardianEye** is now ready to scale from a single server to enterprise deployment! 🚀
+**Watcher** is now ready to scale from a single server to enterprise deployment! 🚀
 
 Choose your deployment architecture, configure your environment variables, and you're good to go!

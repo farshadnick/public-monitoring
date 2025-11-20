@@ -1,4 +1,4 @@
-# GuardianEye - Environment Configuration Guide
+# Watcher - Environment Configuration Guide
 
 ## 🚀 Quick Setup
 

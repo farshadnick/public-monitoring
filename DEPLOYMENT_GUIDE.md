@@ -1,11 +1,11 @@
-# GuardianEye - Deployment & Scaling Guide
+# Watcher - Deployment & Scaling Guide
 
 ## 🚀 Quick Deploy with Docker
 
 ### 1. Clone Repository
 ```bash
 git clone <your-repo-url>
-cd guardianeye
+cd watcher
 ```
 
 ### 2. Configure Environment

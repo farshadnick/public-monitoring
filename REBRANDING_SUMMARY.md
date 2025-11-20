@@ -1,7 +1,7 @@
-# ✅ GuardianEye - Rebranding Complete
+# ✅ Watcher - Rebranding Complete
 
 ## Overview
-The project has been successfully rebranded from "UptimeMonitor" to **GuardianEye** and all technology-specific references and hints have been removed from user-facing content.
+The project has been successfully rebranded from "UptimeMonitor" to **Watcher** and all technology-specific references and hints have been removed from user-facing content.
 
 ---
 

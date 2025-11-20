@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'GuardianEye - Professional Monitoring Service',
+  title: 'Watcher - Professional Monitoring Service',
   description: 'Professional monitoring service for your websites, APIs, and servers. Get instant alerts when your services go down. Real-time monitoring, performance tracking, and more.',
 }
 

@@ -20,7 +20,8 @@ export default function DashboardMain() {
     monitorType: 'https' as 'http' | 'https' | 'ping' | 'port' | 'keyword',
     keyword: '',
     port: 443,
-    alertThreshold: 5000,
+    alertThreshold: 5000, // ms - triggers "slow" warning
+    downThreshold: 30000, // ms - triggers "down" status
     sslMonitoring: true,
   });
   const [showForm, setShowForm] = useState(false);
@@ -92,6 +93,7 @@ export default function DashboardMain() {
           keyword: '',
           port: 443,
           alertThreshold: 5000,
+          downThreshold: 30000,
           sslMonitoring: true,
         });
         setShowForm(false);
@@ -179,7 +181,7 @@ export default function DashboardMain() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">GuardianEye</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Watcher</h1>
             </div>
             
             <div className="flex items-center gap-4">

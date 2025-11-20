@@ -1,4 +1,4 @@
-# GuardianEye - Quick Start Guide
+# Watcher - Quick Start Guide
 
 Get your monitoring system up and running in 5 minutes!
 

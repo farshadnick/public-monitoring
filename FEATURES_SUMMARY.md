@@ -1,4 +1,4 @@
-# GuardianEye - Complete Feature Summary
+# Watcher - Complete Feature Summary
 
 ## 🎉 Overview
 Your professional monitoring platform with comprehensive features including real-time monitoring, incident tracking, cron job monitoring, custom metrics, and public status pages.

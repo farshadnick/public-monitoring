@@ -1,4 +1,4 @@
-# GuardianEye - Professional Monitoring Service
+# Watcher - Professional Monitoring Service
 
 A modern web application for monitoring website and service availability with real-time alerts and comprehensive metrics.
 
@@ -71,6 +71,22 @@ docker-compose up -d
 - **Incidents**: Automatically track downtime events
 - **Status Pages**: Create public status pages for your services
 - **Telegram Notifications**: Configure alerts via Telegram
+- **Custom Thresholds**: Define what "down" means based on response time for each monitor
+
+### Understanding Monitor Status
+
+Monitor status is determined by response time (latency):
+
+- **UP** (Green): Response time less than your slow threshold (default: 5 seconds)
+- **SLOW** (Yellow): Response time between slow and down thresholds (5-30 seconds by default)
+- **DOWN** (Red): Response time exceeds down threshold (default: 30 seconds) or no response
+
+**Example with defaults:**
+- Response in 3s = ✅ UP
+- Response in 10s = ⚠️ SLOW (triggers alert)
+- Response in 35s or timeout = ❌ DOWN (critical alert)
+
+You can customize these thresholds for each monitor based on your service's expected performance.
 
 ## Project Structure
 
