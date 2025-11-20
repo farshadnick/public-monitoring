@@ -6,12 +6,12 @@ services:
     image: mysql:8.0
     container_name: monitoring-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: monitoring
-      MYSQL_USER: monitoring
-      MYSQL_PASSWORD: monitoring_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${DB_NAME:-monitoring}
+      MYSQL_USER: ${DB_USER:-monitoring}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-monitoring_password}
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -37,7 +37,7 @@ services:
     environment:
       # Application
       - NODE_ENV=${NODE_ENV:-production}
-      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-}
       
       # Prometheus & Blackbox
       - PROMETHEUS_URL=${PROMETHEUS_URL:-http://prometheus:9090}
@@ -97,7 +97,7 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     ports:
-      - "9090:9090"
+      - "${PROMETHEUS_PORT:-9090}:9090"
     volumes:
       - ./prometheus-config/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
@@ -115,7 +115,7 @@ services:
     image: prom/blackbox-exporter:latest
     container_name: blackbox-exporter
     ports:
-      - "9115:9115"
+      - "${BLACKBOX_PORT:-9115}:9115"
     volumes:
       - ./prometheus-config/blackbox.yml:/etc/blackbox_exporter/config.yml
     command:
@@ -129,9 +129,9 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
-      - "3001:3000"
+      - "${GRAFANA_PORT:-3001}:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana-data:/var/lib/grafana
